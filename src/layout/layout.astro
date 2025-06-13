@@ -1,0 +1,48 @@
+---
+import Sidebar from "../components/sidebar.astro";
+import "../styles/global.css";
+---
+
+<!doctype html>
+<html lang='es'>
+  <head>
+    <meta charset='UTF-8' />
+    <meta
+      name='description'
+      content='Math Memories - by Alejandro Morales Rios'
+    />
+    <meta name='viewport' content='width=device-width' />
+    <link rel='icon' type='image/svg+xml' href='/me.webp' />
+    <meta name='generator' content={Astro.generator} />
+    <title>Math Memories</title>
+    <link
+      href='https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.1/flowbite.min.css'
+      rel='stylesheet'
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300..700&display=swap" rel="stylesheet">
+  </head>
+  <body>
+    <main>
+      <Sidebar />
+      <div class="p-4 sm:ml-64 flex items-center justify-center sm:h-screen">
+        <slot />
+        <div class="absolute inset-0 -z-10 h-full w-full bg-[#FAF9F6] bg-[linear-gradient(to_right,#f0f0f0_1px,transparent_1px),linear-gradient(to_bottom,#f0f0f0_1px,transparent_1px)] bg-[size:6rem_4rem]" />
+      </div>
+    </main>
+  </body>
+  <script is:inline src="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.js"></script>
+  <script>
+    import "flowbite";
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathlive"></script>
+  <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+  <script>
+    document.addEventListener('astro:after-swap', () => {
+      import("flowbite").then((flowbite) => {
+        flowbite.initFlowbite()
+      });
+    });
+  </script>
+</html>

@@ -1,0 +1,101 @@
+---
+import ContentWrapper from "../../components/content-wrapper.astro";
+import Layout from "../../layout/layout.astro";
+---
+
+<Layout>
+  <ContentWrapper>
+    <section class="space-y-4">
+      <h1 class="text-xl font-semibold">Potenciación - teorema de Moivre</h1>
+      <hr />
+      <div class="flex gap-2 items-center">
+        <p>Número complejo:</p>
+        <math-field id="moivre" class="border border-slate-800 w-full mt-1">1+i</math-field>  
+      </div>
+
+      <div class="flex gap-2 items-center">
+        <p>Exponente:</p>
+        <input id="exponent" type="number" value="2" min="1" class="border border-slate-800 px-2 py-1 w-24 mt-1" />
+      </div>
+
+      <button id="calc-moivre" class="mt-3 px-4 py-2 bg-green-600 text-white rounded hover:bg-purple-700">
+        Calcular zⁿ con Moivre
+      </button>
+      <div id="moivre-output" class="mt-4 text-gray-800"></div>
+      <div id="moivre-plot" class="mt-6"></div>
+    </section>
+
+    <script type="module">
+      import { MathfieldElement } from 'https://unpkg.com/mathlive?module';
+      import { evaluate } from 'https://cdn.jsdelivr.net/npm/mathjs@12.4.1/+esm';
+
+      if (!customElements.get('math-field')) {
+        customElements.define('math-field', MathfieldElement);
+      }
+
+      const calcMoivre = () => {
+      const mf = document.getElementById('moivre');
+      const nInput = document.getElementById('exponent');
+      const out = document.getElementById('moivre-output');
+      const plotDiv = document.getElementById('moivre-plot');
+
+      try {
+        const val = mf.getValue('ascii-math');
+        const n = parseInt(nInput.value, 10);
+        if (isNaN(n) || n < 1) throw new Error('n debe ser un entero positivo');
+
+        const z = evaluate(val);
+        const zn = evaluate(`(${val})^${n}`);
+
+        const aRe = z.re ?? z;
+        const aIm = z.im ?? 0;
+        const zRe = zn.re ?? zn;
+        const zIm = zn.im ?? 0;
+
+        out.innerHTML = `
+          <p><strong>zⁿ:</strong> ${zn.toString()}</p>
+        `;
+
+        const traceZ = {
+          x: [0, aRe],
+          y: [0, aIm],
+          mode: 'lines+markers+text',
+          type: 'scatter',
+          name: 'z',
+          text: ['', `z (${aRe}, ${aIm})`],
+          textposition: 'top right',
+          line: { color: 'blue' },
+          marker: { size: 8, color: 'blue' }
+        };
+
+        const traceZn = {
+          x: [0, zRe],
+          y: [0, zIm],
+          mode: 'lines+markers+text',
+          type: 'scatter',
+          name: `z^${n}`,
+          text: ['', `zⁿ (${zRe}, ${zIm})`],
+          textposition: 'top right',
+          line: { color: 'purple', dash: 'dot' },
+          marker: { size: 8, color: 'purple' }
+        };
+
+        const layout = {
+          title: `Potenciación: z y z^${n}`,
+          xaxis: { title: 'Parte Real', zeroline: true, range: [-Math.max(10, Math.abs(zRe), Math.abs(aRe)), Math.max(10, Math.abs(zRe), Math.abs(aRe))] },
+          yaxis: { title: 'Parte Imaginaria', zeroline: true, range: [-Math.max(10, Math.abs(zIm), Math.abs(aIm)), Math.max(10, Math.abs(zIm), Math.abs(aIm))] },
+          width: 450,
+          height: 450
+        };
+
+        window.Plotly.newPlot(plotDiv, [traceZ, traceZn], layout);
+
+      } catch (err) {
+        out.innerHTML = `<p class="text-red-600">Error: ${err.message}</p>`;
+      }
+    };
+
+      document.getElementById('calc-moivre')?.addEventListener('click', calcMoivre);
+    </script>
+  </ContentWrapper>
+</Layout>

@@ -1,0 +1,79 @@
+---
+import ContentWrapper from "../../components/content-wrapper.astro";
+import Layout from "../../layout/layout.astro";
+const A = `\\begin{bmatrix}1 & 2 \\\\ 3 & 4\\end{bmatrix}`;
+const B = `\\begin{bmatrix}5 & 6 \\\\ 7 & 8\\end{bmatrix}`;
+---
+
+<Layout>
+  <ContentWrapper>
+    <section class="space-y-4 min-w-96">
+      <h1 class="text-xl font-semibold">Multiplicación de Matrices</h1>
+      <hr />
+
+      <div class="flex flex-col gap-2">
+        <div class="flex gap-2 items-center">
+          <p>A:</p>
+          <math-field id="matrixA" class="eq border border-slate-800 w-full p-1">{A}</math-field>
+        </div>
+        <div class="flex gap-2 items-center">
+          <p>B:</p>
+          <math-field id="matrixB" class="eq border border-slate-800 w-full p-1">{B}</math-field>
+        </div>
+      </div>
+
+      <button id="multiply" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+        Multiplicar
+      </button>
+
+      <div id="result" class="mt-4 text-gray-800 text-lg space-y-2"></div>
+
+      <script type="module">
+        import { MathfieldElement } from 'https://unpkg.com/mathlive?module';
+        import * as math from 'https://cdn.jsdelivr.net/npm/mathjs@13.0.0/+esm';
+
+        if (!customElements.get('math-field')) {
+          customElements.define('math-field', MathfieldElement);
+        }
+
+        const parseMatrixLatex = (latex) => {
+          const body = latex.match(/\\begin\{bmatrix\}(.+?)\\end\{bmatrix\}/s)?.[1];
+          if (!body) return null;
+          return body.trim().split('\\\\').map(row =>
+            row.trim().split('&').map(cell => Number(cell.trim()))
+          );
+        };
+
+        const matrixToLatex = (mat) => {
+          return `\\begin{bmatrix}` + mat.map(row => row.join(' & ')).join(' \\\\ ') + `\\end{bmatrix}`;
+        };
+
+        const click = () => {
+          const out = document.getElementById('result');
+          const latexA = document.getElementById('matrixA').getValue();
+          const latexB = document.getElementById('matrixB').getValue();
+
+          const matA = parseMatrixLatex(latexA);
+          const matB = parseMatrixLatex(latexB);
+
+          if (!matA || !matB) {
+            out.innerHTML = `<p class="text-red-600">Error: formato inválido.</p>`;
+            return;
+          }
+
+          try {
+            const result = math.multiply(matA, matB);
+            out.innerHTML = `
+              <div><strong>Resultado:</strong></div>
+              <math-field read-only>${matrixToLatex(result)}</math-field>
+            `;
+          } catch (e) {
+            out.innerHTML = `<p class="text-red-600">Error: ${e.message}</p>`;
+          }
+        };
+
+        document.getElementById('multiply')?.addEventListener('click', click);
+      </script>
+    </section>
+  </ContentWrapper>
+</Layout>

@@ -1,0 +1,79 @@
+---
+import ContentWrapper from "../../components/content-wrapper.astro";
+import Layout from "../../layout/layout.astro";
+const matrix = `\\begin{bmatrix}1 & -4 \\\\ 3 & -10\\end{bmatrix}`;
+---
+
+<Layout>
+  <ContentWrapper>
+    <section class="space-y-4 min-w-96">
+      <h1 class="text-xl font-semibold">Invertir matriz</h1>
+      <hr />
+
+      <div class="flex gap-2 items-center">
+        <p>A:</p>
+        <math-field id="matrix" class="eq border border-slate-800 w-full p-1">{matrix}</math-field>
+      </div>
+
+      <button id="inv" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+        Calcular
+      </button>
+
+      <div id="matrix-output" class="mt-4 text-gray-800"></div>
+
+       <script type="module">
+        import { MathfieldElement } from 'https://unpkg.com/mathlive?module';
+        import * as math from 'https://cdn.jsdelivr.net/npm/mathjs@13.0.0/+esm';
+
+        if (!customElements.get('math-field')) {
+          customElements.define('math-field', MathfieldElement);
+        }
+
+        const parseMatrixLatex = (latex) => {
+          const body = latex.match(/\\begin\{bmatrix\}(.+?)\\end\{bmatrix\}/s)?.[1];
+          if (!body) return null;
+
+          return body.trim().split('\\\\').map(row =>
+            row.trim().split('&').map(cell => Number(cell.trim()))
+          );
+        };
+
+        const matrixToLatex = (mat) => {
+          return `\\begin{bmatrix}` + mat.map(row => row.join(' & ')).join(' \\\\ ') + `\\end{bmatrix}`;
+        };
+
+        const click = () => {
+          const mf = document.getElementById('matrix');
+          const out = document.getElementById('matrix-output');
+
+          const latex = mf.getValue();
+          const numericMatrix = parseMatrixLatex(latex);
+
+          try {
+            const det = math.det(numericMatrix);
+
+            if (det === 0) {
+              out.innerHTML = `
+                <div><strong>Determinante:</strong> 0</div>
+                <p class="text-red-600">La matriz no es invertible porque su determinante es 0.</p>
+              `;
+              return;
+            }
+
+            const inv = math.inv(numericMatrix);
+
+            out.innerHTML = `
+              <div><strong>Determinante:</strong> ${det}</div>
+              <div><strong>Matriz Inversa:</strong></div>
+              <math-field read-only>${matrixToLatex(inv)}</math-field>
+            `;
+          } catch (e) {
+            out.innerHTML = `<p class="text-red-600">Error: ${e.message || "Matriz no válida."}</p>`;
+          }
+        };
+
+        document.getElementById('inv')?.addEventListener('click', click);
+      </script>
+    </section>
+  </ContentWrapper>
+</Layout>

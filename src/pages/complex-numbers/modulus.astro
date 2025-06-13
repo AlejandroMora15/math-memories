@@ -1,0 +1,51 @@
+---
+import ContentWrapper from "../../components/content-wrapper.astro";
+import Layout from "../../layout/layout.astro";
+---
+
+<Layout>
+  <ContentWrapper>
+    <section class="space-y-4">
+      <h1 class="text-xl font-semibold">Módulo de un número complejo</h1>
+      <hr />
+      <div class="flex gap-2 items-center">
+        <p>A:</p>
+        <math-field id="a" class="border border-slate-800 w-full">4+5i</math-field>
+      </div>
+
+      <button id="calc" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+        Calcular
+      </button>
+
+      <div id="error" class="text-red-600 font-medium mt-2"></div>
+      <p id="mod-result" class="mt-2 text-gray-800"></p>
+    </section>
+
+    <script type="module">
+      import { MathfieldElement } from 'https://unpkg.com/mathlive?module';
+      import { evaluate, abs } from 'https://cdn.jsdelivr.net/npm/mathjs@12.4.1/+esm';
+
+      if (!customElements.get('math-field')) {
+        customElements.define('math-field', MathfieldElement);
+      }
+
+      const calculateMod = () => {
+        const mfA = document.getElementById('a');
+        const resultP = document.getElementById('mod-result');
+
+        if (!mfA) return;
+
+        try {
+          const valA = mfA.getValue('ascii-math'); // e.g., "3 + 4i"
+          const complexA = evaluate(valA);
+          const modulus = abs(complexA); // √(re² + im²)
+          resultP.textContent = modulus;
+        } catch (err) {
+          resultP.textContent = `Error: ${err.message}`;
+        }
+      };
+
+      document.getElementById('calc')?.addEventListener('click', calculateMod);
+    </script>
+  </ContentWrapper>
+</Layout>

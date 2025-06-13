@@ -1,0 +1,85 @@
+---
+import ContentWrapper from "../../components/content-wrapper.astro";
+import Layout from "../../layout/layout.astro";
+---
+
+<Layout>
+  <ContentWrapper>
+    <section class="space-y-4">
+      <h1 class="text-xl font-semibold">Coordenadas polares de un número complejo</h1>
+      <hr />
+      <div class="flex gap-2 items-center">
+        <p>A:</p>
+        <math-field id="a" class="border border-slate-800 w-full">4+6i</math-field>
+      </div>
+
+      <button id="polar-btn" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+        Mostrar coordenadas polares
+      </button>
+
+      <p id="polar-result" class="mt-2 text-gray-800"></p>
+      <div id="polar-plot" class="mt-4"></div>
+    </section>
+
+    <script type="module">
+      import { MathfieldElement } from 'https://unpkg.com/mathlive?module';
+      import { evaluate, abs, arg } from 'https://cdn.jsdelivr.net/npm/mathjs@12.4.1/+esm';
+
+      if (!customElements.get('math-field')) {
+        customElements.define('math-field', MathfieldElement);
+      }
+
+      const showPolar = () => {
+        const mf = document.getElementById('a');
+        const result = document.getElementById('polar-result');
+        const plotDiv = document.getElementById('polar-plot');
+
+        try {
+          const val = mf.getValue('ascii-math');
+          const A = evaluate(val);
+
+          const aRe = A.re ?? A;
+          const aIm = A.im ?? 0;
+
+          const r = abs(A);
+          const thetaRad = arg(A);
+          const thetaDeg = (thetaRad * 180 / Math.PI).toFixed(2);
+
+          const polarEquation = `${r.toFixed(4)} × (cos(${thetaDeg}°) + i·sin(${thetaDeg}°))`;
+
+          result.innerHTML = `
+            <strong>r:</strong> ${r.toFixed(4)}<br>
+            <strong>θ:</strong> ${thetaDeg}° (${thetaRad.toFixed(4)} rad)<br>
+            <strong>Forma polar:</strong> z = ${polarEquation}
+          `;
+
+          const trace = {
+            x: [0, aRe],
+            y: [0, aIm],
+            mode: 'lines+markers+text',
+            type: 'scatter',
+            name: `r=${r.toFixed(2)}, θ=${thetaDeg}°`,
+            text: [``, `(${aRe}, ${aIm})`],
+            textposition: 'top right',
+            line: { color: 'green' },
+            marker: { color: 'green', size: 8 }
+          };
+
+          const layout = {
+            title: 'Representación Polar en el Plano Complejo',
+            xaxis: { title: 'Parte Real', zeroline: true, range: [-10, 10] },
+            yaxis: { title: 'Parte Imaginaria', zeroline: true, range: [-10, 10] },
+            width: 500,
+            height: 500
+          };
+
+          window.Plotly.newPlot(plotDiv, [trace], layout);
+        } catch (err) {
+          result.innerHTML = `<span class="text-red-600">Error: ${err.message}</span>`;
+        }
+      };
+
+      document.getElementById('polar-btn')?.addEventListener('click', showPolar);
+    </script>  
+  </ContentWrapper>
+</Layout>

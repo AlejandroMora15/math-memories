@@ -1,0 +1,98 @@
+---
+import ContentWrapper from "../../components/content-wrapper.astro";
+import Layout from "../../layout/layout.astro";
+---
+
+<Layout>
+  <ContentWrapper>
+    <section class="space-y-4">
+      <h1 class="text-xl font-semibold">Conjugada de un número complejo</h1>
+      <hr />
+      <div class="flex gap-2 items-center">
+        <p>A:</p>
+        <math-field id="a" class="border border-slate-800 w-full">4+6i</math-field>
+      </div>
+
+      <button id="graph-conj" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+        Mostrar conjugada y graficar
+      </button>
+
+      <p id="conj-result" class="mt-2 text-gray-800"></p>
+      <div id="plot" class="mt-4"></div>
+    </section>
+
+    <script type="module">
+      import { MathfieldElement } from 'https://unpkg.com/mathlive?module';
+      import { evaluate, conj } from 'https://cdn.jsdelivr.net/npm/mathjs@12.4.1/+esm';
+
+      if (!customElements.get('math-field')) {
+        customElements.define('math-field', MathfieldElement);
+      }
+
+      const plot = () => {
+        const mf = document.getElementById('a');
+        const result = document.getElementById('conj-result');
+        const plotDiv = document.getElementById('plot');
+
+        try {
+          const val = mf.getValue('ascii-math');
+          const A = evaluate(val);
+          const conjA = conj(A);
+
+          const aRe = A.re ?? A;
+          const aIm = A.im ?? 0;
+          const cRe = conjA.re ?? conjA;
+          const cIm = conjA.im ?? 0;
+
+          result.innerHTML = `
+            <strong>A:</strong> (${aRe}, ${aIm})<br>
+            <strong>Conjugada:</strong> (${cRe}, ${cIm})
+          `;
+
+          const traceA = {
+            x: [0, aRe],
+            y: [0, aIm],
+            type: 'scatter',
+            mode: 'lines+markers+text',
+            name: 'A',
+            text: ['', `A (${aRe}, ${aIm})`],
+            textposition: 'top right',
+            line: { color: 'blue' },
+            marker: { color: 'blue', size: 8 }
+          };
+
+          const traceConj = {
+            x: [0, cRe],
+            y: [0, cIm],
+            type: 'scatter',
+            mode: 'lines+markers+text',
+            name: 'conj(A)',
+            text: ['', `conj(A) (${cRe}, ${cIm})`],
+            textposition: 'bottom right',
+            line: { color: 'red', dash: 'dash' },
+            marker: { color: 'red', size: 8 }
+          };
+
+          const layout = {
+            title: 'Plano Complejo',
+            xaxis: { title: 'Parte Real', zeroline: true, range: [-10, 10] },
+            yaxis: { title: 'Parte Imaginaria', zeroline: true, range: [-10, 10] },
+            width: 380,
+            height: 380
+          };
+
+          window.Plotly.newPlot(plotDiv, [traceA, traceConj], layout);
+        } catch (err) {
+          result.innerHTML = `<span class="text-red-600">Error: ${err.message}</span>`;
+        }
+      };
+
+      document.getElementById('graph-conj')?.addEventListener('click', plot);
+      window.addEventListener('astro:after-swap', () => {
+        setTimeout(() => {
+          document.getElementById('graph-conj')?.addEventListener('click', plot);
+        }, 0);
+      });
+    </script>   
+  </ContentWrapper>
+</Layout>

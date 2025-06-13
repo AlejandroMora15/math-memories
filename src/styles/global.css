@@ -1,0 +1,15 @@
+@import "tailwindcss";
+@import "flowbite/src/themes/default";
+@plugin "flowbite/plugin";
+@source "../../node_modules/flowbite";
+
+* {
+  font-family: 'Quicksand', sans-serif;
+}
+
+@theme {
+  --color-primary: #4A90E2;
+  --color-secondary: #F5A623;
+  --color-typography: #2C3E50;
+  --color-sidebar: #E3F2FD;
+}

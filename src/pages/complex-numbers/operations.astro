@@ -1,0 +1,82 @@
+---
+import ContentWrapper from "../../components/content-wrapper.astro";
+import Layout from "../../layout/layout.astro";
+---
+
+<Layout>
+  <ContentWrapper>
+    <section class="space-y-4">
+      <h1 class="text-xl font-semibold">Operaciones básicas para números complejos</h1>
+      <hr />
+      <div class="flex gap-2 items-center">
+        <p>A:</p>
+        <math-field id="a" class="border border-slate-800 w-full">4+5i</math-field>
+      </div>
+      <div class="flex gap-2 items-center">
+        <p>B:</p>
+        <math-field id="b" class="border border-slate-800 w-full">3+7i</math-field>
+      </div>
+
+      <button id="calc" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+        Calcular
+      </button>
+
+      <div id="error" class="text-red-600 font-medium mt-2"></div>
+      <div id="results" class="mt-4 space-y-2 text-gray-800"></div>
+    </section>
+
+    <script type="module" data-astro-rerun>
+      import { MathfieldElement } from 'https://unpkg.com/mathlive?module';
+      import { evaluate } from 'https://cdn.jsdelivr.net/npm/mathjs@12.4.1/+esm';
+
+      if (!customElements.get('math-field')) {
+        customElements.define('math-field', MathfieldElement);
+      }
+
+      const init = () => {
+        const mfA = document.getElementById('a');
+        const mfB = document.getElementById('b');
+        const btn = document.getElementById('calc');
+        const errorDiv = document.getElementById('error');
+        const resultDiv = document.getElementById('results');
+
+        if (!mfA || !mfB || !btn) return;
+
+        const formatResult = (r) => {
+          if (typeof r === 'object') {
+            const re = r.re ?? 0;
+            const im = r.im ?? 0;
+            const sign = im >= 0 ? '+' : '-';
+            return `${re} ${sign} ${Math.abs(im)}i`;
+          }
+          return r.toString();
+        };
+
+        const calculate = () => {
+          errorDiv.textContent = '';
+          try {
+            const valA = mfA.getValue('ascii-math');
+            const valB = mfB.getValue('ascii-math');
+            console.log(`Calculating: A = ${valA}, B = ${valB}`);
+            const sum = evaluate(`(${valA}) + (${valB})`);
+            const product = evaluate(`(${valA}) * (${valB})`);
+            const division = evaluate(`(${valA}) / (${valB})`);
+
+            resultDiv.innerHTML = `
+              <p><strong>Suma:</strong> ${formatResult(sum)}</p>
+              <p><strong>Multiplicación:</strong> ${formatResult(product)}</p>
+              <p><strong>División:</strong> ${formatResult(division)}</p>
+            `;
+          } catch (err) {
+            resultDiv.innerHTML = '';
+            errorDiv.textContent = err.message;
+          }
+        };
+
+        btn.onclick = calculate;
+      };
+
+      window.addEventListener('DOMContentLoaded', init);
+    </script>
+  </ContentWrapper>
+</Layout>

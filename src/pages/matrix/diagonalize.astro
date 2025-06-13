@@ -1,0 +1,115 @@
+---
+import ContentWrapper from "../../components/content-wrapper.astro";
+import Layout from "../../layout/layout.astro";
+const A = `\\begin{bmatrix}4 & 1 \\\\ 2 & 3\\end{bmatrix}`;
+---
+
+<Layout>
+  <ContentWrapper>
+    <section class="space-y-4 min-w-96">
+      <h1 class="text-xl font-semibold">Diagonalización de Matriz</h1>
+      <hr />
+
+      <div class="flex gap-2 items-center">
+        <p>A:</p>
+        <math-field id="matrix" class="eq border border-slate-800 w-full p-1">{A}</math-field>
+      </div>
+
+      <button id="diag" class="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700">
+        Diagonalizar
+      </button>
+
+      <div id="output" class="mt-4 text-gray-800 text-lg space-y-3"></div>
+
+      <script type="module">
+        import { MathfieldElement } from 'https://unpkg.com/mathlive?module';
+        import * as math from 'https://cdn.jsdelivr.net/npm/mathjs@13.0.0/+esm';
+
+        if (!customElements.get('math-field')) {
+          customElements.define('math-field', MathfieldElement);
+        }
+
+        const parseMatrixLatex = (latex) => {
+          const body = latex.match(/\\begin\{bmatrix\}(.+?)\\end\{bmatrix\}/s)?.[1];
+          if (!body) return null;
+          return body.trim().split('\\\\').map(row =>
+            row.trim().split('&').map(cell => Number(cell.trim()))
+          );
+        };
+
+
+        const vectorToLatex = (mat) => {
+          return `\\begin{bmatrix}` +
+            mat.map(({vector}) =>
+              vector._data.map(cell => Number(cell).toFixed(3)).join(' & ')
+            ).join(' \\\\ ') +
+          `\\end{bmatrix}`;
+        };
+
+        const matrixToLatex = (mat) => {
+          const array = math.isMatrix(mat) ? mat.toArray() : mat;
+
+          return `\\begin{bmatrix}` +
+            array
+              .map(row => Array.isArray(row)
+                ? row.map(cell => {
+                    // Si es número complejo de math.js
+                    if (cell && typeof cell === 'object' && 're' in cell && 'im' in cell) {
+                      const re = parseFloat(cell.re).toFixed(3);
+                      const im = parseFloat(cell.im).toFixed(3);
+                      if (Math.abs(im) < 1e-10) return re;
+                      return `${re}${im >= 0 ? '+' : ''}${im}i`;
+                    }
+                    // Si es número o string
+                    if (typeof cell === 'number') return cell.toFixed(3);
+                    return String(cell);
+                  }).join(' & ')
+                : String(row))
+              .join(' \\\\ ') +
+            `\\end{bmatrix}`;
+        };
+
+        const click = () => {
+          const out = document.getElementById('output');
+          const latex = document.getElementById('matrix').getValue();
+          const A = parseMatrixLatex(latex);
+
+          try {
+            const Am = math.matrix(A);
+
+            // Eigenvalues and eigenvectors
+            const eig = math.eigs(Am);
+
+            // Asegurar que los valores propios estén en array plano
+            const values = Array.isArray(eig.values) ? eig.values : eig.values.toArray();
+            const D = math.diag(values);
+
+            const eigenvectors = math.isMatrix(eig.eigenvectors)
+              ? eig.eigenvectors.toArray()
+              : eig.eigenvectors;
+
+            const P = math.transpose(eigenvectors);
+
+            const latexFormula = "A = P D P^{-1}";
+            console.log(P)
+            out.innerHTML = `
+              <div><strong>Fórmula simbólica:</strong> <math-field read-only>$$${latexFormula}$$</math-field></div>
+
+              <div><strong>Valores propios:</strong> ${values.map(v => Number(v).toFixed(3)).join(', ')}</div>
+
+              <div><strong>Vectores propios (columnas de P):</strong></div>
+              <math-field read-only>${vectorToLatex(P)}</math-field>
+
+              <div><strong>Matriz Diagonal D:</strong></div>
+              <math-field read-only>${matrixToLatex(D)}</math-field>
+            `;
+          } catch (e) {
+            out.innerHTML = `<p class="text-red-600">Error: ${e.message}</p>`;
+          }
+        };
+
+        document.getElementById('diag')?.addEventListener('click', click);
+      </script>
+    </section>
+  </ContentWrapper>
+</Layout>
